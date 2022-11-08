@@ -9,17 +9,18 @@ import aiohttp
 from db import db
 
 
+project = re.compile(r'.*<a class="list-group-item paginated_item" '
+                     r'href="/[^/]+/([^/]+)">.*')
 rank = re.compile(r"^(\d+)\.$")
 owner = re.compile(r"^([^/<>]+)/.+$")
-project = re.compile(r'''^([^<>/"']+)$''')
 stars = re.compile(r"^(\d+)$")
 
 
 @dataclass
 class Repo:
+    project: str
     rank: int
     owner: str
-    project: str
     stars: int
 
 
@@ -41,9 +42,9 @@ async def get_repos(session: aiohttp.ClientSession, page: int) -> list[Repo]:
     response = await session.request("GET", get_url(page))
     content = await response.text(encoding="utf-8")
 
-    cycle = [rank, owner, project, stars]
+    cycle = [project, rank, owner, stars]
     i = 0
-    data = ["", "", "", 0]
+    data = ["", "", "", ""]
     for line in content.splitlines():
         if m := cycle[i].match(line):
             data[i] = m.group(1)
@@ -51,7 +52,7 @@ async def get_repos(session: aiohttp.ClientSession, page: int) -> list[Repo]:
             i += 1
             if i >= len(cycle):
                 copy = data.copy()
-                repo = Repo(int(copy[0]), copy[1], copy[2], int(copy[3]))
+                repo = Repo(copy[0], int(copy[1]), copy[2], int(copy[3]))
                 repos.append(repo)
                 i = 0
 
