@@ -18,7 +18,7 @@ def db() -> sqlite3.Cursor:
         CREATE TABLE IF NOT EXISTS repo_langs (
             repo    INTEGER NOT NULL,
             lang    TEXT    NOT NULL,
-            weight  REAL    NOT NULL,
+            weight  INTEGER NOT NULL,
             PRIMARY KEY (repo, lang),
             FOREIGN KEY (repo) REFERENCES repos (rank)
         );
