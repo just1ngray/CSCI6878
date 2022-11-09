@@ -66,7 +66,8 @@ async def fetch_page_range(start: int, stop: int) -> list[Repo]:
     """
     tasks = []
     repos_list = []
-    async with aiohttp.ClientSession() as session:
+    connector = aiohttp.TCPConnector(limit=3)
+    async with aiohttp.ClientSession(connector=connector) as session:
         print(" " * (stop - start + 1) + "|", flush=True, end="\r")
         for page in range(start, stop + 1):
             tasks.append(get_repos(session, page))
