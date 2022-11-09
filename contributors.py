@@ -89,7 +89,7 @@ def main():
         futures = [executor.submit(wrapper, (tmp, *row))
                    for row in db().fetchall()]
         for future in tqdm(concurrent.futures.as_completed(futures),
-                           total=len(futures)):
+                           total=len(futures), smoothing=0.05):
             rank, contributors = future.result()
             insert_contributors(rank, contributors)
 
