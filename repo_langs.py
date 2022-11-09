@@ -36,8 +36,9 @@ async def get_languages(session: aiohttp.ClientSession,
         else:
             return {}
     except ValueError as err:
-        if content["message"] == "Repository access blocked":
-            return {}
+        if content["message"] == "Repository access blocked" \
+            or content["message"] == "Not Found":
+            return { "error": 1 }
         elif "API rate limit exceeded" in content["message"]:
             raise SystemExit("RATE LIMIT HAS BEEN REACHED. WAIT AND TRY AGAIN "
                              "LATER.") from err
@@ -84,6 +85,8 @@ async def main():
             tasks.append(insert_languages(session, rank, owner, project))
 
         await asyncio.gather(*tasks)
+
+    print("\nDone!")
 
 
 if __name__ == '__main__':
