@@ -12,8 +12,7 @@ def db() -> sqlite3.Cursor:
             rank    INTEGER PRIMARY KEY,
             owner   TEXT    NOT NULL,
             project TEXT    NOT NULL,
-            stars   INTEGER,
-            visited BOOLEAN DEFAULT "False"
+            stars   INTEGER
         );
         CREATE TABLE IF NOT EXISTS repo_langs (
             repo    INTEGER NOT NULL,
@@ -22,17 +21,12 @@ def db() -> sqlite3.Cursor:
             PRIMARY KEY (repo, lang),
             FOREIGN KEY (repo) REFERENCES repos (rank)
         );
-        CREATE TABLE IF NOT EXISTS users (
-            id      INTEGER PRIMARY KEY AUTOINCREMENT,
-            name    TEXT    NOT NULL
-        );
         CREATE TABLE IF NOT EXISTS contributors (
-            repo    INTEGER NOT NULL,
-            user    INTEGER NOT NULL,
+            rank    INTEGER NOT NULL,
+            email   INTEGER NOT NULL,
             commits INTEGER NOT NULL,
-            PRIMARY KEY (repo, user),
-            FOREIGN KEY (repo) REFERENCES repos (rank),
-            FOREIGN KEY (user) REFERENCES users (id)
+            PRIMARY KEY (rank, email),
+            FOREIGN KEY (rank) REFERENCES repos (rank)
         );
         COMMIT;
     """)
