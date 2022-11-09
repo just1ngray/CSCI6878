@@ -5,6 +5,7 @@ to work much better.
 TOKEN=YOUR_API_TOKEN_HERE python ...
 """
 import os
+from datetime import datetime
 
 import asyncio
 import aiohttp
@@ -40,8 +41,19 @@ async def get_languages(session: aiohttp.ClientSession,
             or content["message"] == "Not Found":
             return { "error": 1 }
         elif "API rate limit exceeded" in content["message"]:
-            raise SystemExit("RATE LIMIT HAS BEEN REACHED. WAIT AND TRY AGAIN "
-                             "LATER.") from err
+            resp = await session.request("GET",
+                                         "https://api.github.com/rate_limit",
+                                         headers={
+                                            "Authorization": f"Bearer {token}"
+                                         } if token is not None else {})
+            content = await resp.json()
+            stats = f"""
+                Used: {content['rate']['used']}
+                Remaining: {content['rate']['remaining']}
+                Reset: {datetime.fromtimestamp(int(content['rate']['reset']))}
+                """
+
+            raise SystemExit("RATE LIMIT HAS BEEN REACHED. \n" + stats) from err
         else:
             raise err
     except Exception as err:
