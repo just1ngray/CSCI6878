@@ -73,6 +73,9 @@ async def insert_languages(session: aiohttp.ClientSession,
     given repository.
     """
     languages = await get_languages(session, owner, project)
+    if len(languages) == 0:
+        languages = { "none": 0 }
+
     db().executemany("""
         INSERT INTO repo_langs (repo, lang, weight)
         VALUES (?, ?, ?);
