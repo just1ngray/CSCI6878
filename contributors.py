@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import subprocess
 import concurrent.futures
 from pathlib import Path
@@ -29,18 +30,12 @@ def fetch_contributors(owner: str,
                 + clone_into.relative_to(os.getcwd()).as_posix())
         cmd = f"cd '{where.as_posix()}' && git clone --filter=tree:0 " \
               f"https://github.com/{owner}/{project}.git"
-        subprocess.check_output(cmd,
-                                stderr=subprocess.DEVNULL,
-                                shell=True
-                               )
+        subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True)
 
     cmd = f"cd '{clone_into.as_posix()}' && " \
            "git shortlog --numbered --summary --email"
-    out = subprocess.check_output(cmd,
-                                  encoding="utf-8",
-                                  stderr=subprocess.DEVNULL,
-                                  shell=True
-                                 )
+    out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True) \
+                    .decode("utf-8", errors="replace")
 
     contributors: dict[str, int] = {}
     for line in out.splitlines():
@@ -72,7 +67,7 @@ def wrapper(args: tuple[Path, int, str, str]):
     return rank, fetch_contributors(owner, project, tmp / owner)
 
 
-def main():
+def main(nworkers: int):
     tmp = Path("tmp")
     tmp.mkdir(parents=True, exist_ok=True)
 
@@ -85,7 +80,7 @@ def main():
         );
     """)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=nworkers) as executor:
         futures = [executor.submit(wrapper, (tmp, *row))
                    for row in db().fetchall()]
         for future in tqdm(concurrent.futures.as_completed(futures),
@@ -95,4 +90,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    nworkers = int(sys.argv[1]) if len(sys.argv) >= 2 else os.cpu_count()
+    main(nworkers)
