@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass
 
@@ -57,3 +58,55 @@ class GitHubBipartiteGraph:
             contributes_to.add(ContributesTo(email, rank, commits))
 
         return GitHubBipartiteGraph(repositories, contributors, contributes_to)
+
+
+    def to_json(self) -> str:
+        """
+        For importing into Cytoscape
+        """
+        return json.dumps({
+            "elements": {
+                "nodes": [
+                    # node type 1: repositories
+                    *[
+                        {
+                            "data": {
+                                "id": str(repo.rank),
+                                "label": f"{repo.owner}/{repo.project}",
+                                "type": "repository",
+                                "owner": f"{repo.owner}",
+                                "project": f"{repo.project}",
+                                "stars": f"{repo.stars}",
+                                **repo.languages
+                            }
+                        } for repo in self.repositories
+                    ],
+                    # node type 2: contributors
+                    *[
+                        {
+                            "data": {
+                                "id": contrib.email,
+                                "label": contrib.email,
+                                "type": "contributor",
+                            }
+                        } for contrib in self.contributors
+                    ]
+                ],
+                "edges": [
+                    {
+                        "data": {
+                            "id": i,
+                            "source": edge.contributor_email,
+                            "target": str(edge.repository_rank),
+                            "weight": edge.ncommits
+                        }
+                    } for i, edge in enumerate(self.contributes_to)
+                ]
+            }
+        }, indent=2)
+
+
+if __name__ == "__main__":
+    from db import db
+    graph = GitHubBipartiteGraph.from_database(db())
+    print(graph.to_json())
