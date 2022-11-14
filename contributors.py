@@ -21,22 +21,29 @@ def fetch_contributors(owner: str,
     Fetches the contributor list of a given repository by minimally cloning,
     and then using git command to summarize commits.
     """
+    tqdm.write(f"Analyzing contributors of {owner}/{project}")
+
     where = where.absolute()
     where.mkdir(parents=True, exist_ok=True)
+    proj_root = where.joinpath(project)
 
-    clone_into = where.joinpath(project)
-    if not clone_into.exists():
-        tqdm.write("Cloning into "
-                + clone_into.relative_to(os.getcwd()).as_posix())
+    # make the repository is up to date (and downloaded locally)
+    if proj_root.exists():
+        subprocess.check_output(f"cd {proj_root.as_posix()} && git fetch",
+                                stderr=subprocess.DEVNULL,
+                                shell=True)
+    else:
         cmd = f"cd '{where.as_posix()}' && git clone --filter=tree:0 " \
               f"https://github.com/{owner}/{project}.git"
         subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True)
 
-    cmd = f"cd '{clone_into.as_posix()}' && " \
+    # get the list of contributors
+    cmd = f"cd '{proj_root.as_posix()}' && " \
            "git shortlog --numbered --summary --email"
     out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True) \
                     .decode("utf-8", errors="replace")
 
+    # parse the output into a return-able form
     contributors: dict[str, int] = {}
     for line in out.splitlines():
         match = contributor.match(line)
