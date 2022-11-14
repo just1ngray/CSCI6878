@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import subprocess
-import concurrent.futures
+from concurrent import futures
 from pathlib import Path
 
 from tqdm import tqdm
@@ -21,7 +21,7 @@ def fetch_contributors(owner: str,
     Fetches the contributor list of a given repository by minimally cloning,
     and then using git command to summarize commits.
     """
-    tqdm.write(f"Analyzing contributors of {owner}/{project}")
+    tqdm.write(f"{owner}/{project}: Analyzing contributors")
 
     where = where.absolute()
     where.mkdir(parents=True, exist_ok=True)
@@ -32,10 +32,12 @@ def fetch_contributors(owner: str,
         subprocess.check_output(f"cd {proj_root.as_posix()} && git fetch",
                                 stderr=subprocess.DEVNULL,
                                 shell=True)
+        tqdm.write(f"{owner}/{project}: Fetched")
     else:
         cmd = f"cd '{where.as_posix()}' && git clone --filter=tree:0 " \
               f"https://github.com/{owner}/{project}.git"
         subprocess.check_output(cmd, stderr=subprocess.DEVNULL, shell=True)
+        tqdm.write(f"{owner}/{project}: Cloned")
 
     # get the list of contributors
     cmd = f"cd '{proj_root.as_posix()}' && " \
@@ -87,13 +89,17 @@ def main(nworkers: int):
         );
     """)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=nworkers) as executor:
-        futures = [executor.submit(wrapper, (tmp, *row))
-                   for row in db().fetchall()]
-        for future in tqdm(concurrent.futures.as_completed(futures),
-                           total=len(futures), smoothing=0.05):
+    with futures.ProcessPoolExecutor(max_workers=nworkers) as executor:
+        tasks = [executor.submit(wrapper, (tmp, *row))
+                 for row in db().fetchall()]
+        generator = tqdm(futures.as_completed(tasks),
+                         total=len(tasks),
+                         smoothing=0.05)
+        for future in generator:
+            generator.update()
             rank, contributors = future.result()
             insert_contributors(rank, contributors)
+            generator.update()
 
 
 if __name__ == "__main__":
