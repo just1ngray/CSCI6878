@@ -97,5 +97,12 @@ def main(nworkers: int):
 
 
 if __name__ == "__main__":
-    nworkers = int(sys.argv[1]) if len(sys.argv) >= 2 else os.cpu_count()
+    try:
+        nworkers = int(sys.argv[1])
+    except (IndexError, ValueError):
+        print(f"Please provide the number of parallel git clones you want to "
+              f"perform. You have {os.cpu_count()} CPU cores to take advantage "
+              f"of, but you may be limited by network or disk constraints.")
+        exit(1)
+
     main(nworkers)
