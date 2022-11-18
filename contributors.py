@@ -61,9 +61,10 @@ def fetch_contributors(owner: str,
         contributors: dict[str, int] = {}
         for line in out.splitlines():
             match = contributor.match(line)
-            email = match.group("email")
-            ncommits = int(match.group("ncommits"))
-            contributors[email] = contributors.get(email, 0) + ncommits
+            if match is not None:
+                email = match.group("email")
+                ncommits = int(match.group("ncommits"))
+                contributors[email] = contributors.get(email, 0) + ncommits
         return contributors
     finally:
         tqdm.write(f"{owner}/{project}: Done!")
