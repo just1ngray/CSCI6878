@@ -32,7 +32,7 @@ Find the top $n$ repositories to survey using
 traverse the pages using the following command:
 
 ```shell
-$ python repos.py n m
+$ python src/repos.py n m
 ```
 for $1 \leq n \leq m$. This defines the __inclusive__ page range to query from
 gitstar.
@@ -43,7 +43,7 @@ Using a [GitHub api token](https://docs.github.com/en/authentication/keeping-you
 find the programming languages used in each repository.
 
 ```shell
-$ TOKEN=YOUR_GITHUB_API_TOKEN python repo_langs.py
+$ TOKEN=YOUR_GITHUB_API_TOKEN python src/repo_langs.py
 ```
 
 Alternatively, if you do not have a GitHub account you can omit the token
@@ -62,7 +62,7 @@ list of all contributors. This is all done automatically in the contributors
 program.
 
 ```shell
-$ python contributors.py c
+$ python src/contributors.py c
 ```
 
 Where $c$ is chosen as the number of parallel clones you wish to run. The
@@ -74,7 +74,7 @@ should be taken as a maximum value.
 ## Analysis
 ### Cytoscape export
 ```shell
-$ python github_graph.py > import_me_into_cytoscape.json
+$ python src/github_graph.py > import_me_into_cytoscape.json
 ```
 
 ### Loading into memory
